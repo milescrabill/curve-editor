@@ -8,6 +8,8 @@
 
 /* Begin PBXBuildFile section */
 		0268D2EB19CADDAA00480123 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0268D2EA19CADDAA00480123 /* main.cpp */; };
+		0268D2F219CADE6D00480123 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0268D2F119CADE6D00480123 /* OpenGL.framework */; };
+		0268D2F419CADE7100480123 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0268D2F319CADE7100480123 /* GLUT.framework */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -23,8 +25,18 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		022F58CC19D982E6006A4D79 /* freeformcurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = freeformcurve.h; sourceTree = "<group>"; };
+		022F58CD19D9848A006A4D79 /* bezier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bezier.h; sourceTree = "<group>"; };
+		026567C219DD9080004B16BE /* polyline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = polyline.h; sourceTree = "<group>"; };
+		026567C319DD9263004B16BE /* lagrangecurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lagrangecurve.h; sourceTree = "<group>"; };
 		0268D2E719CADDAA00480123 /* curvePractical */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = curvePractical; sourceTree = BUILT_PRODUCTS_DIR; };
 		0268D2EA19CADDAA00480123 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
+		0268D2F119CADE6D00480123 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		0268D2F319CADE7100480123 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = System/Library/Frameworks/GLUT.framework; sourceTree = SDKROOT; };
+		0268D2F519CADEDA00480123 /* float2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = float2.h; sourceTree = "<group>"; };
+		0268D2F619CAE7BC00480123 /* curve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curve.h; sourceTree = "<group>"; };
+		0268D2F719CAE7E000480123 /* circle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = circle.h; sourceTree = "<group>"; };
+		02BB5AE419D424F900ED06EF /* wonkycurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wonkycurve.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -32,6 +44,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				0268D2F419CADE7100480123 /* GLUT.framework in Frameworks */,
+				0268D2F219CADE6D00480123 /* OpenGL.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -41,6 +55,8 @@
 		0268D2DE19CADDAA00480123 = {
 			isa = PBXGroup;
 			children = (
+				0268D2F319CADE7100480123 /* GLUT.framework */,
+				0268D2F119CADE6D00480123 /* OpenGL.framework */,
 				0268D2E919CADDAA00480123 /* curvePractical */,
 				0268D2E819CADDAA00480123 /* Products */,
 			);
@@ -58,6 +74,14 @@
 			isa = PBXGroup;
 			children = (
 				0268D2EA19CADDAA00480123 /* main.cpp */,
+				026567C219DD9080004B16BE /* polyline.h */,
+				02BB5AE419D424F900ED06EF /* wonkycurve.h */,
+				022F58CC19D982E6006A4D79 /* freeformcurve.h */,
+				022F58CD19D9848A006A4D79 /* bezier.h */,
+				0268D2F719CAE7E000480123 /* circle.h */,
+				0268D2F519CADEDA00480123 /* float2.h */,
+				026567C319DD9263004B16BE /* lagrangecurve.h */,
+				0268D2F619CAE7BC00480123 /* curve.h */,
 			);
 			path = curvePractical;
 			sourceTree = "<group>";
@@ -202,6 +226,7 @@
 		0268D2EF19CADDAA00480123 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -209,6 +234,7 @@
 		0268D2F019CADDAA00480123 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_WARN_ABOUT_DEPRECATED_FUNCTIONS = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -232,6 +258,7 @@
 				0268D2F019CADDAA00480123 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
