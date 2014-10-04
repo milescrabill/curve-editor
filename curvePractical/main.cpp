@@ -34,19 +34,7 @@ const GLfloat randColor[] = {rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX,
 const bool debug = true;
 const bool debugMouse = false;
 
-std::vector<Circle> circles;
 std::vector<Freeform*> curves;
-
-// selected curve
-int selected = 0;
-Curve* selectedCurve;
-
-// dragging curves
-bool draggingCurve = false;
-float2 startOfDrag;
-
-// currently moving point
-std::pair<int, int> currentCurvePoint = std::make_tuple(-1, -1);
 
 enum mode {
     polyline,
@@ -58,8 +46,19 @@ enum mode {
 };
 
 mode currentMode = move;
-
 bool drawing = false;
+
+// selected curve
+int selected = 0;
+Curve* selectedCurve;
+bool draggingControlPoint = false;
+
+// dragging curves
+bool draggingCurve = false;
+float2 startOfDrag;
+
+// currently moving point
+std::pair<int, int> currentCurvePoint = std::make_tuple(-1, -1);
 
 void drawPoint(float2 f) {
     glBegin(GL_POINTS);
@@ -163,11 +162,6 @@ void onMouse(int button, int state, int x, int y) {
             printf("mouse x: %d, mouse y: %d\n", x, y);
         }
 
-        // Aaron's hillbilly rand function
-        //        circles.push_back(Circle(f, (arc4random() * 1.0 / 0x100000000)));
-        //        curves.push_back(new BezierCurve());
-
-
         float2 f = convertMouse(x, y);
 
         switch (currentMode) {
@@ -210,6 +204,8 @@ void onMouse(int button, int state, int x, int y) {
                             draggingCurve = true;
                             startOfDrag = f;
                         }
+                    } else {
+                        draggingControlPoint = true;
                     }
                 }
             }
@@ -219,6 +215,7 @@ void onMouse(int button, int state, int x, int y) {
         }
     } else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP && !drawing) {
         currentCurvePoint = std::make_pair(-1, -1);
+        draggingControlPoint = false;
         draggingCurve = false;
     }
 }
@@ -233,7 +230,7 @@ void onDisplay() {
 
         glLineWidth(lineWidth);
         glColor3fv(red);
-        if (selected == i) {
+        if (selected == i && !draggingControlPoint) {
             glColor3fv(blue);
             glLineWidth(2 * lineWidth);
 //          curves[i]->drawTangent(time * 0.0001 - floor(time * 0.0001));
@@ -241,6 +238,16 @@ void onDisplay() {
 
         curves[i]->draw();
         curves[i]->drawControlPoints();
+    }
+
+    if (draggingControlPoint) {
+        glPointSize(3.0f * pointSize);
+        float2 p = curves[currentCurvePoint.first]->getControlPoint(currentCurvePoint.second);
+        glBegin(GL_POINTS);
+        glColor3fv(blue);
+        glVertex2f(p.x, p.y);
+        glEnd();
+        glPointSize(pointSize);
     }
 
     glutSwapBuffers();
@@ -303,6 +310,12 @@ void onKeyboardUp(unsigned char key, int mouseX, int mouseY) {
         drawing = false;
         if (debug) {
             printf("lagrange deselected\n");
+        }
+    } else if (key == 'd') {
+        currentMode = move;
+        drawing = false;
+        if (debug) {
+            printf("removeControlPoints deselected\n");
         }
     }
 }
