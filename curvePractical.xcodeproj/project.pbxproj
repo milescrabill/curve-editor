@@ -27,6 +27,7 @@
 /* Begin PBXFileReference section */
 		022F58CC19D982E6006A4D79 /* freeformcurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = freeformcurve.h; sourceTree = "<group>"; };
 		022F58CD19D9848A006A4D79 /* bezier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bezier.h; sourceTree = "<group>"; };
+		0259A2FF19E34F7700790F97 /* sinewave.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sinewave.h; sourceTree = "<group>"; };
 		026567C219DD9080004B16BE /* polyline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = polyline.h; sourceTree = "<group>"; };
 		026567C319DD9263004B16BE /* lagrangecurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lagrangecurve.h; sourceTree = "<group>"; };
 		0268D2E719CADDAA00480123 /* curvePractical */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = curvePractical; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -81,6 +82,7 @@
 				0268D2F719CAE7E000480123 /* circle.h */,
 				0268D2F519CADEDA00480123 /* float2.h */,
 				026567C319DD9263004B16BE /* lagrangecurve.h */,
+				0259A2FF19E34F7700790F97 /* sinewave.h */,
 				0268D2F619CAE7BC00480123 /* curve.h */,
 			);
 			path = curvePractical;

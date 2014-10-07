@@ -16,13 +16,14 @@
 #include "wonkycurve.h"
 #include "bezier.h"
 #include "lagrangecurve.h"
+#include "sinewave.h"
 
 // pixel width and height of the window, assigned later
 int width, height;
 
 // global values
 float lineWidth = 2.0f;
-float pointSize = 3.0f;
+float pointSize = 4.0f;
 
 // colors
 const GLfloat red[] = {1.0f, 0.0f, 0.0f};
@@ -60,6 +61,9 @@ float2 startOfDrag;
 // currently moving point
 std::pair<int, int> currentCurvePoint = std::make_tuple(-1, -1);
 
+Sinewave sw;
+int foo = 0;
+
 void drawPoint(float2 f) {
     glBegin(GL_POINTS);
     glVertex2f(f.x, f.y);
@@ -68,6 +72,9 @@ void drawPoint(float2 f) {
 
 std::pair<int, int> mouseOverControlPoint(float2 p) {
     std::pair<int, int> closestCurvePoint = std::make_tuple(-1, -1);
+    if (int(curves.size()) == 0) {
+        return closestCurvePoint;
+    }
     double diffX = fabs(curves[0]->getControlPoint(0).x - p.x);
     double diffY = fabs(curves[0]->getControlPoint(0).y - p.y);
     for (int i = 0; i < curves.size(); i++) {
@@ -166,10 +173,21 @@ void onMouse(int button, int state, int x, int y) {
 
         switch (currentMode) {
             case addControlPoints:
-                curves[selected]->addControlPoint(f);
+                if (curves.size() > 0) {
+                    curves[selected]->addControlPoint(f);
+                    curves[selected]->populatePoints();
+                }
                 break;
+            case removeControlPoints:
+                if (curves.size() > 0) {
+                    currentCurvePoint = mouseOverControlPoint(f);
+                    if (currentCurvePoint.first == selected) {
+                        curves[selected]->removeControlPoint(currentCurvePoint.second);
+                        curves[selected]->populatePoints();
+                    }
+                }
             case bezier: {
-                if (drawing) {
+                if (drawing && curves.size() > 0) {
                     curves[selected]->addControlPoint(f);
                     curves[selected]->populatePoints();
                 } else {
@@ -182,19 +200,24 @@ void onMouse(int button, int state, int x, int y) {
                 break;
             }
             case lagrange: {
-                if (drawing) {
-                    curves[selected]->addControlPoint(f);
+                LagrangeCurve* l;
+                if (drawing && curves.size() > 0) {
+                    l = dynamic_cast<LagrangeCurve*>(selectedCurve);
+                    l->addControlPoint(f);
+                    l->populatePoints();
                 } else {
                     drawing = true;
                     curves.push_back(new LagrangeCurve());
                     selectedCurve = curves.back();
                     selected = int(curves.size()) - 1;
-                    curves[selected]->addControlPoint(f);
+
+                    l = dynamic_cast<LagrangeCurve*>(selectedCurve);
+                    l->addControlPoint(f);
                 }
                 break;
             }
             case move: {
-                if (!drawing) {
+                if (!drawing && curves.size() > 0) {
                     currentCurvePoint = mouseOverControlPoint(f);
                     if (currentCurvePoint.first == -1 && currentCurvePoint.second == -1) {
                         int curve = mouseOverCurve(f);
@@ -224,21 +247,30 @@ void onDisplay() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-//    int time = glutGet(GLUT_ELAPSED_TIME);
+    int time = glutGet(GLUT_ELAPSED_TIME);
 
     for (int i = 0; i < curves.size(); i++) {
-
         glLineWidth(lineWidth);
         glColor3fv(red);
+        curves[i]->drawControlPoints();
         if (selected == i && !draggingControlPoint) {
             glColor3fv(blue);
             glLineWidth(2 * lineWidth);
 //          curves[i]->drawTangent(time * 0.0001 - floor(time * 0.0001));
         }
-
         curves[i]->draw();
-        curves[i]->drawControlPoints();
     }
+
+
+//    glBegin(GL_LINE_STRIP);
+//    glVertex2f(time / 10, sin(time));
+//    glEnd();
+
+    foo += 1;
+    printf("foo: %d", foo % 300 - 100);
+    sw = Sinewave(-1, 0, (foo % 300 - 100));
+
+    sw.draw();
 
     if (draggingControlPoint) {
         glPointSize(3.0f * pointSize);
@@ -277,9 +309,14 @@ void onKeyboard(unsigned char key, int mouseX, int mouseY) {
         currentMode = lagrange;
     } else if (key == 'd') {
         if (debug && currentMode != removeControlPoints) {
-            printf("removeControlPoint selected\n");
+            printf("removeControlPoints selected\n");
         }
         currentMode = removeControlPoints;
+    } else if (key == 'a') {
+        if (debug && currentMode != addControlPoints) {
+            printf("addControlPoints selected\n");
+        }
+        currentMode = addControlPoints;
     }
 }
 
@@ -293,30 +330,9 @@ void onKeyboardUp(unsigned char key, int mouseX, int mouseY) {
         if (debug) {
             printf("Selected: %d\n", selected);
         }
-    } else if (key == 'p') {
+    } else {
         currentMode = move;
         drawing = false;
-        if (debug) {
-            printf("polyline deselected\n");
-        }
-    } else if (key == 'b') {
-        currentMode = move;
-        drawing = false;
-        if (debug) {
-            printf("bezier deselected\n");
-        }
-    } else if (key == 'l') {
-        currentMode = move;
-        drawing = false;
-        if (debug) {
-            printf("lagrange deselected\n");
-        }
-    } else if (key == 'd') {
-        currentMode = move;
-        drawing = false;
-        if (debug) {
-            printf("removeControlPoints deselected\n");
-        }
     }
 }
 
