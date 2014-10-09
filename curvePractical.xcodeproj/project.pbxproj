@@ -37,6 +37,7 @@
 		0268D2F519CADEDA00480123 /* float2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = float2.h; sourceTree = "<group>"; };
 		0268D2F619CAE7BC00480123 /* curve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curve.h; sourceTree = "<group>"; };
 		0268D2F719CAE7E000480123 /* circle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = circle.h; sourceTree = "<group>"; };
+		0286264A19E69337009D84CF /* curveinstance.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curveinstance.h; sourceTree = "<group>"; };
 		02BB5AE419D424F900ED06EF /* wonkycurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wonkycurve.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -84,6 +85,7 @@
 				026567C319DD9263004B16BE /* lagrangecurve.h */,
 				0259A2FF19E34F7700790F97 /* sinewave.h */,
 				0268D2F619CAE7BC00480123 /* curve.h */,
+				0286264A19E69337009D84CF /* curveinstance.h */,
 			);
 			path = curvePractical;
 			sourceTree = "<group>";

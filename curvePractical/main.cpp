@@ -17,6 +17,7 @@
 #include "bezier.h"
 #include "lagrangecurve.h"
 #include "sinewave.h"
+#include "curveinstance.h"
 
 // pixel width and height of the window, assigned later
 int width, height;
@@ -36,6 +37,7 @@ const bool debug = true;
 const bool debugMouse = false;
 
 std::vector<Freeform*> curves;
+std::vector<CurveInstance*> curveInstances;
 
 enum mode {
     polyline,
@@ -174,16 +176,32 @@ void onMouse(int button, int state, int x, int y) {
         switch (currentMode) {
             case addControlPoints:
                 if (curves.size() > 0) {
-                    curves[selected]->addControlPoint(f);
-                    curves[selected]->populatePoints();
+                    LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
+
+                    // LagrangeCurve overrides addControlPoint
+                    if (l != NULL) {
+                        l->addControlPoint(f);
+                        l->populatePoints();
+                    } else {
+                        curves[selected]->addControlPoint(f);
+                        curves[selected]->populatePoints();
+                    }
                 }
                 break;
             case removeControlPoints:
                 if (curves.size() > 0) {
                     currentCurvePoint = mouseOverControlPoint(f);
                     if (currentCurvePoint.first == selected) {
-                        curves[selected]->removeControlPoint(currentCurvePoint.second);
-                        curves[selected]->populatePoints();
+
+                        LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
+                        // LagrangeCurve overrides addControlPoint
+                        if (l != NULL) {
+                            l->removeControlPoint(currentCurvePoint.second);
+                            l->populatePoints();
+                        } else {
+                            curves[selected]->removeControlPoint(currentCurvePoint.second);
+                            curves[selected]->populatePoints();
+                        }
                     }
                 }
             case bezier: {
@@ -249,28 +267,29 @@ void onDisplay() {
 
     int time = glutGet(GLUT_ELAPSED_TIME);
 
-    for (int i = 0; i < curves.size(); i++) {
+//    for (int i = 0; i < curves.size(); i++) {
+//        glLineWidth(lineWidth);
+//        glColor3fv(red);
+//        curves[i]->drawControlPoints();
+//        if (selected == i && !draggingControlPoint) {
+//            glColor3fv(blue);
+//            glLineWidth(2 * lineWidth);
+////          curves[i]->drawTangent(time * 0.0001 - floor(time * 0.0001));
+//        }
+//        curves[i]->draw();
+//    }
+
+    for (CurveInstance *ci: curveInstances) {
         glLineWidth(lineWidth);
         glColor3fv(red);
-        curves[i]->drawControlPoints();
-        if (selected == i && !draggingControlPoint) {
-            glColor3fv(blue);
-            glLineWidth(2 * lineWidth);
-//          curves[i]->drawTangent(time * 0.0001 - floor(time * 0.0001));
-        }
-        curves[i]->draw();
+        ci->draw();
     }
 
-
-//    glBegin(GL_LINE_STRIP);
-//    glVertex2f(time / 10, sin(time));
-//    glEnd();
-
-    foo += 1;
-    printf("foo: %d", foo % 300 - 100);
-    sw = Sinewave(-1, 0, (foo % 300 - 100));
-
-    sw.draw();
+    // draw a sine wave!
+//    foo += 1;
+//    printf("foo: %d", foo % 500 - 100);
+//    sw = Sinewave(-1, 0, (foo % 500 - 100));
+//    sw.draw();
 
     if (draggingControlPoint) {
         glPointSize(3.0f * pointSize);
@@ -292,31 +311,60 @@ void onReshape(int w, int h) {
 }
 
 void onKeyboard(unsigned char key, int mouseX, int mouseY) {
-    if (key == 'p') {
-        if (debug && currentMode != polyline) {
-            printf("polyline selected\n");
+    switch(key) {
+        case 'p': {
+            if (debug && currentMode != polyline) {
+                printf("polyline selected\n");
+            }
+            currentMode = polyline;
+            break;
         }
-        currentMode = polyline;
-    } else if (key == 'b') {
-        if (debug && currentMode != bezier) {
-            printf("bezier selected\n");
+        case 'b': {
+            if (debug && currentMode != bezier) {
+                printf("bezier selected\n");
+            }
+            currentMode = bezier;
+            break;
         }
-        currentMode = bezier;
-    } else if (key == 'l') {
-        if (debug && currentMode != lagrange) {
-            printf("lagrange selected\n");
+        case 'l': {
+            if (debug && currentMode != lagrange) {
+                printf("lagrange selected\n");
+            }
+            currentMode = lagrange;
+            break;
         }
-        currentMode = lagrange;
-    } else if (key == 'd') {
-        if (debug && currentMode != removeControlPoints) {
-            printf("removeControlPoints selected\n");
+        case 'd': {
+            if (debug && currentMode != removeControlPoints) {
+                printf("removeControlPoints selected\n");
+            }
+            currentMode = removeControlPoints;
+            break;
         }
-        currentMode = removeControlPoints;
-    } else if (key == 'a') {
-        if (debug && currentMode != addControlPoints) {
-            printf("addControlPoints selected\n");
+        case 'a': {
+            if (debug && currentMode != addControlPoints) {
+                printf("addControlPoints selected\n");
+            }
+            currentMode = addControlPoints;
+            break;
         }
-        currentMode = addControlPoints;
+        case 'q': {
+            if (curves.size() > 0) {
+                curves[selected]->rotationAngle++;
+            }
+            break;
+        }
+        case 'r': {
+            if (curves.size() > 0) {
+                curves[selected]->rotationAngle--;
+            }
+            break;
+        }
+        case 'm': {
+            if (curves.size() > 0) {
+
+            }
+            break;
+        }
     }
 }
 
@@ -327,6 +375,9 @@ void onKeyboardUp(unsigned char key, int mouseX, int mouseY) {
         }
     } else if (key == 32) {
         selected = (selected + 1) % curves.size();
+        selectedCurve = curves[selected];
+//        ci = CurveInstance(selectedCurve, float2(0.0f, 0.0f));
+
         if (debug) {
             printf("Selected: %d\n", selected);
         }

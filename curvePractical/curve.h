@@ -16,6 +16,9 @@ protected:
     // lookup table of points
     float2 points[numberOfPoints];
 public:
+
+    float rotationAngle = 0.0f;
+
     virtual float2 getPoint(float t) = 0;
     virtual float2 getDerivative(float t) = 0;
 
@@ -40,16 +43,20 @@ public:
     }
 
     void draw() {
+        glRotatef(rotationAngle, 0, 0, 1);
         glBegin(GL_LINE_STRIP);
         // draw a line strip of small segments along the curve
         for (int i = 0; i < numberOfPoints; i++) {
             glVertex2f(points[i].x, points[i].y);
         }
         glEnd();
+        glRotatef(-rotationAngle, 0, 0, 1);
     }
     void drawTracker(float t) {
         // draw a point at: float2 r = getPoint(t)
         // draw a line between r and r + getDerivative(t)
+        glRotatef(rotationAngle, 0, 0, 1);
+
         float2 p = getPoint(t);
         glBegin(GL_POINTS);
         glVertex2f(p.x, p.y);
@@ -60,6 +67,8 @@ public:
         glVertex2f(p.x, p.y);
         glVertex2f(p.x + d.x, p.y + d.y);
         glEnd();
+        glRotatef(-rotationAngle, 0, 0, 1);
+
     }
 
     void drawTangent(float t) {

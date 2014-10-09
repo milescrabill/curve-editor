@@ -13,6 +13,7 @@
 
 class BezierCurve : public Freeform {
 public:
+
     static double bernstein(int i, int n, double t) {
         if(n == 1) {
             if(i == 0) return 1-t;

@@ -15,6 +15,7 @@ class LagrangeCurve : public Freeform {
 protected:
     std::vector<float> knots;
 public:
+
     void redistributeKnots() {
         if (knots.size() == 1) {
             knots[0] = 1;
@@ -29,9 +30,15 @@ public:
         controlPoints.push_back(p);
         knots.push_back(0.0f);
         redistributeKnots();
-        for (int i = 0; i < knots.size(); i++) {
-            printf("knots[%d] = %f\n",i, knots[i]);
-        }
+//        for (int i = 0; i < knots.size(); i++) {
+//            printf("knots[%d] = %f\n",i, knots[i]);
+//        }
+    }
+
+    void removeControlPoint(int index) {
+        controlPoints.erase(controlPoints.begin() + index);
+        knots.erase(knots.begin());
+        redistributeKnots();
     }
 
     float2 getPoint(float t) {

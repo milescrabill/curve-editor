@@ -17,6 +17,7 @@ protected:
     std::vector<float2> controlPoints;
     std::vector<int> closePoints;
 public:
+    
     virtual float2 getPoint(float t) = 0;
     virtual float2 getDerivative(float t) = 0;
 
@@ -56,11 +57,13 @@ public:
 
     void drawControlPoints(){
         // draw points at control points
+        glRotatef(rotationAngle, 0, 0, 1);
         glBegin(GL_POINTS);
         for (int i = 0; i < controlPoints.size(); i++) {
             glVertex2f(controlPoints[i].x, controlPoints[i].y);
         }
         glEnd();
+        glRotatef(-rotationAngle, 0, 0, 1);
     }
 };
 
