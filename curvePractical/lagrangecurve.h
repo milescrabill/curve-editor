@@ -41,22 +41,28 @@ public:
         redistributeKnots();
     }
 
-    float2 getPoint(float t) {
-        float2 p = float2(0.0f, 0.0f);
-
-        for (int i = 0; i < controlPoints.size(); i++) {
-            double numerator = 1.0f;
-            double denominator = 1.0f;
-            for (int j = 0; j < knots.size(); j++) {
-                if (i != j) {
-                    numerator *= t - knots[j];
-                    denominator *= knots[i] - knots[j];
-                }
+    double lagrange(int i, int n, double t) {
+        double numerator = 1.0f;
+        double denominator = 1.0f;
+        for (int j = 0; j < knots.size(); j++) {
+            if (i != j) {
+                numerator *= t - knots[j];
+                denominator *= knots[i] - knots[j];
             }
-            p += controlPoints[i] * (numerator / denominator);
         }
+        return numerator / denominator;
+    }
 
-        return p;
+    float2 getPoint(float t) {
+        float2 r(0.0, 0.0);
+        for (int i = 0; i < controlPoints.size(); i++) {
+            double l = lagrange(i, int(controlPoints.size()) - 1, t);
+            double lx = controlPoints[i].x * l;
+            double ly = controlPoints[i].y * l;
+            r.x += lx;
+            r.y += ly;
+        }
+        return r;
     }
 
     float2 getDerivative(float t) {
