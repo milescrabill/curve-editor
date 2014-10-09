@@ -6,6 +6,21 @@
 //  Copyright (c) 2014 Miles Crabill. All rights reserved.
 //
 
+/*
+    Implemented features:
+    - Pressing SPACE makes the next object selected instead of the current one, repeatedly pressing SPACE cycles over all curves. [5 pts]
+    - When no keys are pressed and the user presses the mouse button, the object at the mouse cursor (if there is any) becomes selected. [15 pts if this works approximately, (*) 25 pts if this works exactly]
+        - 15 points currently
+    - As long as the mouse button remains pressed, mouse movements drag the selected object. When the button is released, the object remains selected. [15 pts]
+    - When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
+    - Support removing control points of the selected curve, by holding 'D' and clicking them. [10 pts]
+    - Support dragging control points of the selected curve. [10 pts]
+    - When an object is selected, pressing the 'F' key should turn the curve into a polygon that fills the curve. [5 pts if it works for convex shapes, (*) 20 pts if it works for non-self-intersecting curves, (*) 25 points if it works for any curve]
+        - 5 points currently
+
+    Total: 5 + 15 + 15 + 5 + 10 + 10 + 5
+*/
+
 #include <iostream>
 #include <vector>
 #include <GLUT/Glut.h>
@@ -18,6 +33,7 @@
 #include "lagrangecurve.h"
 #include "sinewave.h"
 #include "curveinstance.h"
+#include "polyline.h"
 
 // pixel width and height of the window, assigned later
 int width, height;
@@ -49,10 +65,12 @@ enum mode {
 
 mode currentMode = move;
 bool drawing = false;
+bool filling = false;
 
 // selected curve
 int selected = 0;
-Freeform* selectedCurve;
+Freeform *selectedCurve;
+BezierCurve *b;
 bool draggingControlPoint = false;
 
 // dragging curves
@@ -75,24 +93,27 @@ std::pair<int, int> mouseOverControlPoint(float2 p) {
     }
     double diffX = fabs(curves[0]->getControlPoint(0).x - p.x);
     double diffY = fabs(curves[0]->getControlPoint(0).y - p.y);
-    for (int i = 0; i < curves.size(); i++) {
-        std::vector<int> closePoints = curves[i]->getClosestControlPoints(p);
-        for (int j = 0; j < closePoints.size(); j++) {
-            float2 f = curves[i]->getControlPoint(closePoints[j]);
-            double newDiffX = fabs(f.x - p.x);
-            double newDiffY = fabs(f.y - p.y);
 
-            if (newDiffX - 0.005f < diffX && newDiffY - 0.005f < diffY) {
-                closestCurvePoint = std::make_tuple(i, closePoints[j]);
+    // this used to loop over ALL control points, i.e. in all curves
+    // changed to fit assignment guidelines
+//    for (int i = 0; i < curves.size(); i++) {
+    std::vector<int> closePoints = curves[selected]->getClosestControlPoints(p);
+    for (int j = 0; j < closePoints.size(); j++) {
+        float2 f = curves[selected]->getControlPoint(closePoints[j]);
+        double newDiffX = fabs(f.x - p.x);
+        double newDiffY = fabs(f.y - p.y);
 
-                if (debug) {
-                    printf("closestPoint curve: %d, control point: %d\n", closestCurvePoint.first, closestCurvePoint.second);
-                }
+        if (newDiffX - 0.005f < diffX && newDiffY - 0.005f < diffY) {
+            closestCurvePoint = std::make_tuple(selected, closePoints[j]);
 
-                diffX = newDiffX;
-                diffY = newDiffY;
+            if (debug) {
+                printf("closestPoint curve: %d, control point: %d\n", closestCurvePoint.first, closestCurvePoint.second);
             }
+
+            diffX = newDiffX;
+            diffY = newDiffY;
         }
+//        }
     }
 
     return closestCurvePoint;
@@ -181,6 +202,7 @@ void onMouse(int button, int state, int x, int y) {
                         selectedCurve->addControlPoint(f);
                         selectedCurve->populatePoints();
                     }
+                    delete l;
                 }
                 break;
             case removeControlPoints:
@@ -197,6 +219,7 @@ void onMouse(int button, int state, int x, int y) {
                             selectedCurve->removeControlPoint(currentCurvePoint.second);
                             selectedCurve->populatePoints();
                         }
+                        delete l;
                     }
                 }
             case bezier: {
@@ -270,6 +293,10 @@ void onDisplay() {
 //            curves[i]->drawTangent(time * 0.0001 - floor(time * 0.0001));
             glColor3fv(blue);
             glLineWidth(2 * lineWidth);
+            if (filling) {
+                selectedCurve->fill();
+            }
+            glColor3fv(blue);
         }
         curves[i]->draw();
     }
@@ -342,12 +369,6 @@ void onKeyboard(unsigned char key, int mouseX, int mouseY) {
             }
             break;
         }
-        case 'm': {
-            if (curves.size() > 0) {
-
-            }
-            break;
-        }
     }
 }
 
@@ -356,6 +377,8 @@ void onKeyboardUp(unsigned char key, int mouseX, int mouseY) {
         for (int i = 0; i < curves.size(); i++) {
             curves[i]->clearControlPoints();
         }
+    } else if (key == 'f') {
+        filling = !filling;
     } else if (key == 32) {
         selected = (selected + 1) % curves.size();
         selectedCurve = curves[selected];
@@ -373,8 +396,8 @@ void onIdle() {
         for (int i = 0; i < curves.size(); i++) {
             if (curves[i]->numberOfControlPoints() <= 2) {
                 curves.erase(curves.begin() + selected);
-                selected = int(curves.size()) - 1;
-                selectedCurve = curves.back();
+                selected = 0;
+                selectedCurve = curves[selected];
             }
         }
     }

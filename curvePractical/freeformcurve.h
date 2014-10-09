@@ -59,8 +59,19 @@ public:
         // draw points at control points
         glRotatef(rotationAngle, 0, 0, 1);
         glBegin(GL_POINTS);
-        for (int i = 0; i < controlPoints.size(); i++) {
-            glVertex2f(controlPoints[i].x, controlPoints[i].y);
+        for (float2 p : controlPoints) {
+            glVertex2f(p.x, p.y);
+        }
+        glEnd();
+        glRotatef(-rotationAngle, 0, 0, 1);
+    }
+
+
+    void fill() {
+        glRotatef(rotationAngle, 0, 0, 1);
+        glBegin(GL_POLYGON);
+        for (float2 p : points) {
+            glVertex2f(p.x, p.y);
         }
         glEnd();
         glRotatef(-rotationAngle, 0, 0, 1);
