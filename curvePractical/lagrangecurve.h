@@ -30,9 +30,6 @@ public:
         controlPoints.push_back(p);
         knots.push_back(0.0f);
         redistributeKnots();
-//        for (int i = 0; i < knots.size(); i++) {
-//            printf("knots[%d] = %f\n",i, knots[i]);
-//        }
     }
 
     void removeControlPoint(int index) {

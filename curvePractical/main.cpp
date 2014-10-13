@@ -77,8 +77,8 @@ bool draggingControlPoint = false;
 bool draggingCurve = false;
 float2 startOfDrag;
 
-// currently moving point
-std::pair<int, int> currentCurvePoint = std::make_tuple(-1, -1);
+// currently moving point index within selected curve
+int currentPointIndex;
 
 void drawPoint(float2 f) {
     glBegin(GL_POINTS);
@@ -86,13 +86,13 @@ void drawPoint(float2 f) {
     glEnd();
 }
 
-std::pair<int, int> mouseOverControlPoint(float2 p) {
-    std::pair<int, int> closestCurvePoint = std::make_tuple(-1, -1);
+int mouseOverControlPoint(float2 p) {
+    int closestPoint = -1;
     if (int(curves.size()) == 0) {
-        return closestCurvePoint;
+        return closestPoint;
     }
-    double diffX = fabs(curves[0]->getControlPoint(0).x - p.x);
-    double diffY = fabs(curves[0]->getControlPoint(0).y - p.y);
+    double diffX = fabs(selectedCurve->getControlPoint(0).x - p.x);
+    double diffY = fabs(selectedCurve->getControlPoint(0).y - p.y);
 
     // this used to loop over ALL control points, i.e. in all curves
     // changed to fit assignment guidelines
@@ -104,10 +104,10 @@ std::pair<int, int> mouseOverControlPoint(float2 p) {
         double newDiffY = fabs(f.y - p.y);
 
         if (newDiffX - 0.005f < diffX && newDiffY - 0.005f < diffY) {
-            closestCurvePoint = std::make_tuple(selected, closePoints[j]);
+            closestPoint = closePoints[j];
 
             if (debug) {
-                printf("closestPoint curve: %d, control point: %d\n", closestCurvePoint.first, closestCurvePoint.second);
+                printf("closestPoint curve: %d, control point: %d\n", selected, closestPoint);
             }
 
             diffX = newDiffX;
@@ -116,7 +116,7 @@ std::pair<int, int> mouseOverControlPoint(float2 p) {
 //        }
     }
 
-    return closestCurvePoint;
+    return closestPoint;
 }
 
 int mouseOverCurve(float2 p) {
@@ -161,13 +161,10 @@ void onMouseMove(int x, int y) {
     if (currentMode == move) {
         float2 f = convertMouse(x, y);
 
-        int curve = currentCurvePoint.first;
-        int point = currentCurvePoint.second;
-        if (!(curve == -1 || point == -1)) {
-            curves[curve]->setControlPoint(point, f);
-            curves[curve]->populatePoints();
+        if (draggingControlPoint) {
+            selectedCurve->setControlPoint(currentPointIndex, f);
+            selectedCurve->populatePoints();
         }
-
         if (draggingCurve) {
             for (int i = 0; i < selectedCurve->numberOfControlPoints(); i++) {
                 float2 p = selectedCurve->getControlPoint(i);
@@ -178,7 +175,6 @@ void onMouseMove(int x, int y) {
             }
             startOfDrag = f;
         }
-
     }
 }
 
@@ -207,21 +203,31 @@ void onMouse(int button, int state, int x, int y) {
                 break;
             case removeControlPoints:
                 if (curves.size() > 0) {
-                    currentCurvePoint = mouseOverControlPoint(f);
-                    if (currentCurvePoint.first == selected) {
-
-                        LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
-                        // LagrangeCurve overrides addControlPoint
-                        if (l != NULL) {
-                            l->removeControlPoint(currentCurvePoint.second);
-                            l->populatePoints();
-                        } else {
-                            selectedCurve->removeControlPoint(currentCurvePoint.second);
-                            selectedCurve->populatePoints();
-                        }
-                        delete l;
+                    currentPointIndex = mouseOverControlPoint(f);
+                    // LagrangeCurve overrides addControlPoint
+                    LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
+                    if (l != NULL) {
+                        l->removeControlPoint(currentPointIndex);
+                        l->populatePoints();
+                    } else {
+                        selectedCurve->removeControlPoint(currentPointIndex);
+                        selectedCurve->populatePoints();
                     }
+                    delete l;
                 }
+            case polyline: {
+                if (drawing && curves.size() > 0) {
+                    selectedCurve->addControlPoint(f);
+                    selectedCurve->populatePoints();
+                } else {
+                    drawing = true;
+                    curves.push_back(new Polyline());
+                    selectedCurve = curves.back();
+                    selected = int(curves.size()) - 1;
+                    selectedCurve->addControlPoint(f);
+                }
+                break;
+            }
             case bezier: {
                 if (drawing && curves.size() > 0) {
                     selectedCurve->addControlPoint(f);
@@ -254,8 +260,8 @@ void onMouse(int button, int state, int x, int y) {
             }
             case move: {
                 if (!drawing && curves.size() > 0) {
-                    currentCurvePoint = mouseOverControlPoint(f);
-                    if (currentCurvePoint.first == -1 && currentCurvePoint.second == -1) {
+                    currentPointIndex = mouseOverControlPoint(f);
+                    if (currentPointIndex == -1) {
                         int curve = mouseOverCurve(f);
                         if (curve != -1) {
                             selected = curve;
@@ -273,7 +279,7 @@ void onMouse(int button, int state, int x, int y) {
             }
         }
     } else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP && !drawing) {
-        currentCurvePoint = std::make_pair(-1, -1);
+        currentPointIndex = -1;
         draggingControlPoint = false;
         draggingCurve = false;
     }
@@ -286,6 +292,7 @@ void onDisplay() {
 //    int time = glutGet(GLUT_ELAPSED_TIME);
 
     for (int i = 0; i < curves.size(); i++) {
+
         glLineWidth(lineWidth);
         glColor3fv(red);
         curves[i]->drawControlPoints();
@@ -294,16 +301,34 @@ void onDisplay() {
             glColor3fv(blue);
             glLineWidth(2 * lineWidth);
             if (filling) {
-                selectedCurve->fill();
+                Polyline *p = dynamic_cast<Polyline*>(selectedCurve);
+                if (p) {
+                    p->fill();
+                } else {
+                    selectedCurve->fill();
+                }
             }
             glColor3fv(blue);
         }
-        curves[i]->draw();
+
+        // polyline has a different draw method
+//        Polyline *p = (Polyline*) curves[i];
+        Polyline *p = dynamic_cast<Polyline*>(curves[i]);
+        if (p) {
+            p->draw();
+        } else {
+            curves[i]->draw();
+        }
+
+        // this breaks when drawing polylines
+        // probably leaking memory everywhere
+        // TODO
+//        delete p;
     }
 
     if (draggingControlPoint) {
         glPointSize(3.0f * pointSize);
-        float2 p = curves[currentCurvePoint.first]->getControlPoint(currentCurvePoint.second);
+        float2 p = selectedCurve->getControlPoint(currentPointIndex);
         glBegin(GL_POINTS);
         glColor3fv(blue);
         glVertex2f(p.x, p.y);
@@ -405,8 +430,7 @@ void onIdle() {
     glutPostRedisplay();
 }
 
-int main(int argc, char * argv[])
-{
+int main(int argc, char * argv[]) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 

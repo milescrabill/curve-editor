@@ -34,7 +34,7 @@ public:
 
     void populatePoints() {
         for (int i = 0; i < numberOfPoints; i++) {
-            points[i] = getPoint(i * 0.01f);
+            points[i] = getPoint(i * (1.0 / (numberOfPoints - 1)));
         }
     }
 
@@ -43,6 +43,8 @@ public:
     }
 
     void draw() {
+        glLoadIdentity();
+        glPushMatrix();
         glRotatef(rotationAngle, 0, 0, 1);
         glBegin(GL_LINE_STRIP);
         // draw a line strip of small segments along the curve
@@ -50,11 +52,13 @@ public:
             glVertex2f(points[i].x, points[i].y);
         }
         glEnd();
-        glRotatef(-rotationAngle, 0, 0, 1);
+        glPopMatrix();
     }
     void drawTracker(float t) {
         // draw a point at: float2 r = getPoint(t)
         // draw a line between r and r + getDerivative(t)
+        glLoadIdentity();
+        glPushMatrix();
         glRotatef(rotationAngle, 0, 0, 1);
 
         float2 p = getPoint(t);
@@ -67,7 +71,7 @@ public:
         glVertex2f(p.x, p.y);
         glVertex2f(p.x + d.x, p.y + d.y);
         glEnd();
-        glRotatef(-rotationAngle, 0, 0, 1);
+        glPopMatrix();
 
     }
 
