@@ -34,6 +34,8 @@
 #include "sinewave.h"
 #include "curveinstance.h"
 #include "polyline.h"
+#include "hermite.h"
+//#include "bezierclock.h"
 
 // pixel width and height of the window, assigned later
 int width, height;
@@ -45,7 +47,9 @@ float pointSize = 4.0f;
 // colors
 const GLfloat red[] = {1.0f, 0.0f, 0.0f};
 const GLfloat green[] = {0.0f, 1.0f, 0.0f};
+const GLfloat purple[] = {0.33f, 0.1f, 0.55f};
 const GLfloat blue[] = {0.0f, 0.0f, 1.0f};
+const GLfloat yellow[] = {0.89f, 0.81f, 0.34f};
 const GLfloat randColor[] = {rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX};
 
 // debug flags
@@ -58,6 +62,7 @@ enum mode {
     polyline,
     lagrange,
     bezier,
+    hermite,
     removeControlPoints,
     addControlPoints,
     move,
@@ -68,9 +73,10 @@ bool drawing = false;
 bool filling = false;
 
 // selected curve
-int selected = 0;
+// defaults to -1 to signify no selected curve
+int selected = -1;
+
 Freeform *selectedCurve;
-BezierCurve *b;
 bool draggingControlPoint = false;
 
 // dragging curves
@@ -87,6 +93,10 @@ void drawPoint(float2 f) {
 }
 
 int mouseOverControlPoint(float2 p) {
+    if (selectedCurve == NULL) {
+        return -1;
+    }
+
     int closestPoint = -1;
     if (int(curves.size()) == 0) {
         return closestPoint;
@@ -94,12 +104,10 @@ int mouseOverControlPoint(float2 p) {
     double diffX = fabs(selectedCurve->getControlPoint(0).x - p.x);
     double diffY = fabs(selectedCurve->getControlPoint(0).y - p.y);
 
-    // this used to loop over ALL control points, i.e. in all curves
-    // changed to fit assignment guidelines
-//    for (int i = 0; i < curves.size(); i++) {
-    std::vector<int> closePoints = curves[selected]->getClosestControlPoints(p);
+    // loops over control points of curve, finds closest within an epsilon
+    std::vector<int> closePoints = selectedCurve->getClosestControlPoints(p);
     for (int j = 0; j < closePoints.size(); j++) {
-        float2 f = curves[selected]->getControlPoint(closePoints[j]);
+        float2 f = selectedCurve->getControlPoint(closePoints[j]);
         double newDiffX = fabs(f.x - p.x);
         double newDiffY = fabs(f.y - p.y);
 
@@ -113,7 +121,6 @@ int mouseOverControlPoint(float2 p) {
             diffX = newDiffX;
             diffY = newDiffY;
         }
-//        }
     }
 
     return closestPoint;
@@ -184,6 +191,10 @@ void onMouse(int button, int state, int x, int y) {
             printf("mouse x: %d, mouse y: %d\n", x, y);
         }
 
+        if (debug) {
+            printf("currentMode: %u\n", currentMode);
+        }
+
         float2 f = convertMouse(x, y);
 
         switch (currentMode) {
@@ -204,7 +215,7 @@ void onMouse(int button, int state, int x, int y) {
             case removeControlPoints:
                 if (curves.size() > 0) {
                     currentPointIndex = mouseOverControlPoint(f);
-                    // LagrangeCurve overrides addControlPoint
+                    // LagrangeCurve overrides removeControlPoint
                     LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
                     if (l != NULL) {
                         l->removeControlPoint(currentPointIndex);
@@ -213,8 +224,9 @@ void onMouse(int button, int state, int x, int y) {
                         selectedCurve->removeControlPoint(currentPointIndex);
                         selectedCurve->populatePoints();
                     }
-                    delete l;
+                    currentPointIndex = -1;
                 }
+                break;
             case polyline: {
                 if (drawing && curves.size() > 0) {
                     selectedCurve->addControlPoint(f);
@@ -258,6 +270,23 @@ void onMouse(int button, int state, int x, int y) {
                 }
                 break;
             }
+            case hermite: {
+                Hermite* h;
+                if (drawing && curves.size() > 0) {
+                    h = dynamic_cast<Hermite*>(selectedCurve);
+                    h->addControlPoint(f);
+                    h->populatePoints();
+                } else {
+                    drawing = true;
+                    curves.push_back(new Hermite());
+                    selectedCurve = curves.back();
+                    selected = int(curves.size()) - 1;
+
+                    h = dynamic_cast<Hermite*>(selectedCurve);
+                    h->addControlPoint(f);
+                }
+                break;
+            }
             case move: {
                 if (!drawing && curves.size() > 0) {
                     currentPointIndex = mouseOverControlPoint(f);
@@ -268,6 +297,8 @@ void onMouse(int button, int state, int x, int y) {
                             selectedCurve = curves[curve];
                             draggingCurve = true;
                             startOfDrag = f;
+                        } else {
+                            selectedCurve = NULL;
                         }
                     } else {
                         draggingControlPoint = true;
@@ -285,6 +316,49 @@ void onMouse(int button, int state, int x, int y) {
     }
 }
 
+void drawCurve(Freeform *curve) {
+    Polyline *p = dynamic_cast<Polyline*>(curve);
+    BezierCurve *b = dynamic_cast<BezierCurve*>(curve);
+    LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(curve);
+    Hermite *h = dynamic_cast<Hermite*>(curve);
+
+    if (curve == selectedCurve && !draggingControlPoint) {
+        glColor3fv(blue);
+        glLineWidth(2 * lineWidth);
+    }
+
+    if (p) {
+        if (curve != selectedCurve || draggingControlPoint) {
+            glColor3fv(purple);
+        }
+        p->draw();
+
+    } else if (b) {
+        if (curve != selectedCurve || draggingControlPoint) {
+            glColor3fv(red);
+        }
+        b->draw();
+    } else if (l) {
+        if (curve != selectedCurve || draggingControlPoint) {
+            glColor3fv(green);
+        }
+        l->draw();
+    } else if (h) {
+        if (curve != selectedCurve || draggingControlPoint) {
+            glColor3fv(yellow);
+        }
+        h->draw();
+        h->linesBetweenTangentAndControlPoints();
+    }
+
+    if (filling) {
+        curve->fill();
+    }
+    
+    curve->drawControlPoints();
+
+}
+
 void onDisplay() {
     glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -292,38 +366,7 @@ void onDisplay() {
 //    int time = glutGet(GLUT_ELAPSED_TIME);
 
     for (int i = 0; i < curves.size(); i++) {
-
-        glLineWidth(lineWidth);
-        glColor3fv(red);
-        curves[i]->drawControlPoints();
-        if (selected == i && !draggingControlPoint) {
-//            curves[i]->drawTangent(time * 0.0001 - floor(time * 0.0001));
-            glColor3fv(blue);
-            glLineWidth(2 * lineWidth);
-            if (filling) {
-                Polyline *p = dynamic_cast<Polyline*>(selectedCurve);
-                if (p) {
-                    p->fill();
-                } else {
-                    selectedCurve->fill();
-                }
-            }
-            glColor3fv(blue);
-        }
-
-        // polyline has a different draw method
-//        Polyline *p = (Polyline*) curves[i];
-        Polyline *p = dynamic_cast<Polyline*>(curves[i]);
-        if (p) {
-            p->draw();
-        } else {
-            curves[i]->draw();
-        }
-
-        // this breaks when drawing polylines
-        // probably leaking memory everywhere
-        // TODO
-//        delete p;
+        drawCurve(curves[i]);
     }
 
     if (draggingControlPoint) {
@@ -366,6 +409,13 @@ void onKeyboard(unsigned char key, int mouseX, int mouseY) {
                 printf("lagrange selected\n");
             }
             currentMode = lagrange;
+            break;
+        }
+        case 'u': {
+            if (debug && currentMode != hermite) {
+                printf("hermite selected\n");
+            }
+            currentMode = hermite;
             break;
         }
         case 'd': {
@@ -417,9 +467,10 @@ void onKeyboardUp(unsigned char key, int mouseX, int mouseY) {
 }
 
 void onIdle() {
+    // checks for and deletes finished curves with <2 points
     if (!drawing) {
         for (int i = 0; i < curves.size(); i++) {
-            if (curves[i]->numberOfControlPoints() <= 2) {
+            if (curves[i]->numberOfControlPoints() <2) {
                 curves.erase(curves.begin() + selected);
                 selected = 0;
                 selectedCurve = curves[selected];
