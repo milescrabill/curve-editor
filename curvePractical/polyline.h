@@ -40,8 +40,21 @@ public:
 
     }
 
+    float2 getPointOnLine(int i, int n, float t) {
+        float m;
+        if (i <= n) {
+            m = (float(controlPoints[i+1].y - controlPoints[i].y) / float(controlPoints[i+1].x - controlPoints[i].x));
+        } else {
+            m = (float(controlPoints[0].y - controlPoints[i].y) / float(controlPoints[0].x - controlPoints[i].x));
+        }
+        return float2(controlPoints[i].x + (m * t), controlPoints[i].y + (m * t));
+    }
+
     float2 getPoint(float t) {
-        return float2(0.0f, 0.0f);
+        int n = int(controlPoints.size() - 1);
+        int i = floor(t*n);
+        float time = (t - (float(i) / float(n))) * n;
+        return getPointOnLine(i, n, time);
     }
 
     float2 getDerivative(float t) {

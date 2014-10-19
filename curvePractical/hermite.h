@@ -118,7 +118,6 @@ public:
         int n = int(controlPoints.size() - 1);
         int i = floor(t*n);
         float time = (t - (float(i) / float(n))) * n;
-        printf("n: %d, i: %d, time: %f\n", n, i, time);
         return hermite(i, time);
     }
 

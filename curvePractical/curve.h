@@ -42,7 +42,7 @@ public:
         return points[i];
     }
 
-    void draw() {
+    virtual void draw() {
         glLoadIdentity();
         glPushMatrix();
         glRotatef(rotationAngle, 0, 0, 1);
