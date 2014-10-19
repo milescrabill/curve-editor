@@ -16,6 +16,10 @@ protected:
     std::vector<float> knots;
 public:
 
+    int curveType() {
+        return 1;
+    }
+
     void redistributeKnots() {
         if (knots.size() == 1) {
             knots[0] = 1;

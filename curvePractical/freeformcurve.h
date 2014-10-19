@@ -20,24 +20,25 @@ public:
     
     virtual float2 getPoint(float t) = 0;
     virtual float2 getDerivative(float t) = 0;
+    virtual int curveType() = 0;
 
-    float2 getControlPoint(int index) {
+    virtual float2 getControlPoint(int index) {
         return controlPoints[index];
     }
 
-    void setControlPoint(int index, float2 p) {
+    virtual void setControlPoint(int index, float2 p) {
         controlPoints[index] = p;
     }
 
-    void addControlPoint(float2 p) {
+    virtual void addControlPoint(float2 p) {
         controlPoints.push_back(p);
     }
 
-    void removeControlPoint(int index) {
+    virtual void removeControlPoint(int index) {
         controlPoints.erase(controlPoints.begin() + index);
     }
 
-    void clearControlPoints() {
+    virtual void clearControlPoints() {
         controlPoints.clear();
     }
 
@@ -45,7 +46,7 @@ public:
         return int(controlPoints.size());
     }
 
-    std::vector<int> getClosestControlPoints(float2 p) {
+    virtual std::vector<int> getClosestControlPoints(float2 p) {
         closePoints.clear();
         for (int i = 0; i < controlPoints.size(); i++) {
             if ((fabs(controlPoints[i].x - p.x) <= 0.05f && fabs(controlPoints[i].y - p.y) <= 0.05f)) {
@@ -67,7 +68,7 @@ public:
     }
 
 
-    void fill() {
+    virtual void fill() {
         glRotatef(rotationAngle, 0, 0, 1);
         glBegin(GL_POLYGON);
         for (float2 p : points) {

@@ -9,16 +9,39 @@
 /*
     Implemented features:
     - Pressing SPACE makes the next object selected instead of the current one, repeatedly pressing SPACE cycles over all curves. [5 pts]
+        - working
     - When no keys are pressed and the user presses the mouse button, the object at the mouse cursor (if there is any) becomes selected. [15 pts if this works approximately, (*) 25 pts if this works exactly]
         - 15 points currently
+        - works for everything except polyline, approximate
     - As long as the mouse button remains pressed, mouse movements drag the selected object. When the button is released, the object remains selected. [15 pts]
+        - dragging works for all control points, work for all curves (hermite and catmull-rom wiggle a bit)
+            - except polyline
     - When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
+        - working
     - Support removing control points of the selected curve, by holding 'D' and clicking them. [10 pts]
+        - working
     - Support dragging control points of the selected curve. [10 pts]
+        - working
+        - note: for catmull-rom, cannot drag tangent points (as it should be) but can select them
     - When an object is selected, pressing the 'F' key should turn the curve into a polygon that fills the curve. [5 pts if it works for convex shapes, (*) 20 pts if it works for non-self-intersecting curves, (*) 25 points if it works for any curve]
         - 5 points currently
+        - working for convex
+     - Support cubic Hermite interpolation splines, created by clicking control points while holding key 'U'. Derivatives at control points should be manually editable. Extra controls should be displayed to allow the user to adjust derivatives. [(*) 35 pts]
+        - working
+     - Support Catmull-Rom splines, created by clicking control points while holding key 'R'. [25 pts]
+        - working?
 
-    Total: 5 + 15 + 15 + 5 + 10 + 10 + 5
+
+    Total: 5 + 15 + 15 + 5 + 10 + 10 + 5 + 35 + 20
+*/
+
+/*
+    Disclaimer: This codebase is messy.
+    I now understand the point of virtual methods - I know that I should have handled inheritance differently.
+    I didn't realize that virtual methods could be implemented in the parent, and therefore have a default behavior that can be easily overriden. So instead I implemented different versions within child classes, and used dynamic_casts to check whether the method is applicable.
+ 
+    Sorry,
+    Miles
 */
 
 #include <iostream>
@@ -30,12 +53,12 @@
 #include "curve.h"
 #include "wonkycurve.h"
 #include "bezier.h"
-#include "lagrangecurve.h"
+#include "lagrange.h"
 #include "sinewave.h"
-#include "curveinstance.h"
 #include "polyline.h"
 #include "hermite.h"
-//#include "bezierclock.h"
+#include "catmullrom.h"
+#include "bezierclock.h"
 
 // pixel width and height of the window, assigned later
 int width, height;
@@ -50,6 +73,7 @@ const GLfloat green[] = {0.0f, 1.0f, 0.0f};
 const GLfloat purple[] = {0.33f, 0.1f, 0.55f};
 const GLfloat blue[] = {0.0f, 0.0f, 1.0f};
 const GLfloat yellow[] = {0.89f, 0.81f, 0.34f};
+const GLfloat fuchsia[] = {1.0f, 0.0f, 1.0f};
 const GLfloat randColor[] = {rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX};
 
 // debug flags
@@ -63,10 +87,18 @@ enum mode {
     lagrange,
     bezier,
     hermite,
+    catmullrom,
     removeControlPoints,
     addControlPoints,
     move,
 };
+
+// was going to use these instead of pointers
+// and dynamic_casts, but I was already knee deep
+//const int BezierType = 0;
+//const int LagrangeType = 1;
+//const int PolylineType = 2;
+//const int HermiteType = 3;
 
 mode currentMode = move;
 bool drawing = false;
@@ -86,12 +118,6 @@ float2 startOfDrag;
 // currently moving point index within selected curve
 int currentPointIndex;
 
-void drawPoint(float2 f) {
-    glBegin(GL_POINTS);
-    glVertex2f(f.x, f.y);
-    glEnd();
-}
-
 int mouseOverControlPoint(float2 p) {
     if (selectedCurve == NULL) {
         return -1;
@@ -104,10 +130,27 @@ int mouseOverControlPoint(float2 p) {
     double diffX = fabs(selectedCurve->getControlPoint(0).x - p.x);
     double diffY = fabs(selectedCurve->getControlPoint(0).y - p.y);
 
+
+    // hermite overrides getClosestControlPoints
+    Hermite *h = dynamic_cast<Hermite*>(selectedCurve);
+    std::vector<int> closePoints;
+    if (h) {
+        closePoints = h->getClosestControlPoints(p);
+    } else {
+        closePoints = selectedCurve->getClosestControlPoints(p);
+    }
+
     // loops over control points of curve, finds closest within an epsilon
-    std::vector<int> closePoints = selectedCurve->getClosestControlPoints(p);
     for (int j = 0; j < closePoints.size(); j++) {
-        float2 f = selectedCurve->getControlPoint(closePoints[j]);
+        float2 f;
+
+        // hermite overrides getControlPoint
+        if (h) {
+            f = h->getControlPoint(closePoints[j]);
+        } else {
+            f = selectedCurve->getControlPoint(closePoints[j]);
+        }
+
         double newDiffX = fabs(f.x - p.x);
         double newDiffY = fabs(f.y - p.y);
 
@@ -167,20 +210,41 @@ void onMouseMove(int x, int y) {
 
     if (currentMode == move) {
         float2 f = convertMouse(x, y);
+        Hermite *h = dynamic_cast<Hermite*>(selectedCurve);
+        CatmullRom *c = dynamic_cast<CatmullRom*>(selectedCurve);
 
         if (draggingControlPoint) {
-            selectedCurve->setControlPoint(currentPointIndex, f);
+            // hermite overloads setControlPoint
+            if (c) {
+                c->setControlPoint(currentPointIndex, f);
+            } else if (h) {
+                h->setControlPoint(currentPointIndex, f);
+            } else {
+                selectedCurve->setControlPoint(currentPointIndex, f);
+            }
             selectedCurve->populatePoints();
         }
         if (draggingCurve) {
-            for (int i = 0; i < selectedCurve->numberOfControlPoints(); i++) {
-                float2 p = selectedCurve->getControlPoint(i);
-                p.x += f.x - startOfDrag.x ;
-                p.y += f.y - startOfDrag.y;
-                selectedCurve->setControlPoint(i, p);
-                selectedCurve->populatePoints();
+            float2 p;
+            if (h) {
+                for (int i = 0; i < h->numberOfControlPoints() * 2; i++) {
+                    // hermite overrides getControlPoint
+                    p = h->getControlPoint(i);
+                    p += f - startOfDrag;
+                    // hermite overrides setControlPoint
+                    h->setControlPoint(i, p);
+                    h->populatePoints();
+                }
+                startOfDrag = f;
+            } else {
+                for (int i = 0; i < selectedCurve->numberOfControlPoints(); i++) {
+                    p = selectedCurve->getControlPoint(i);
+                    p += f - startOfDrag;
+                    selectedCurve->setControlPoint(i, p);
+                    selectedCurve->populatePoints();
+                }
+                startOfDrag = f;
             }
-            startOfDrag = f;
         }
     }
 }
@@ -191,42 +255,52 @@ void onMouse(int button, int state, int x, int y) {
             printf("mouse x: %d, mouse y: %d\n", x, y);
         }
 
-        if (debug) {
-            printf("currentMode: %u\n", currentMode);
-        }
-
         float2 f = convertMouse(x, y);
 
         switch (currentMode) {
-            case addControlPoints:
+            case addControlPoints: {
                 if (curves.size() > 0) {
                     LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
-                    // LagrangeCurve overrides addControlPoint
-                    if (l != NULL) {
+                    Hermite *h = dynamic_cast<Hermite*>(selectedCurve);
+                    CatmullRom *c = dynamic_cast<CatmullRom*>(selectedCurve);
+                    // LagrangeCurve, Hermite, and CatmullRom override addControlPoint
+                    if (l) {
                         l->addControlPoint(f);
-                        l->populatePoints();
+                    } else if (c) {
+                        c->addControlPoint(f);
+                    } else if (h) {
+                        h->addControlPoint(f);
                     } else {
                         selectedCurve->addControlPoint(f);
-                        selectedCurve->populatePoints();
                     }
-                    delete l;
+
+                    selectedCurve->populatePoints();
                 }
                 break;
-            case removeControlPoints:
+            }
+            case removeControlPoints: {
                 if (curves.size() > 0) {
                     currentPointIndex = mouseOverControlPoint(f);
                     // LagrangeCurve overrides removeControlPoint
                     LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(selectedCurve);
-                    if (l != NULL) {
+                    Hermite *h = dynamic_cast<Hermite*>(selectedCurve);
+                    CatmullRom *c = dynamic_cast<CatmullRom*>(selectedCurve);
+                    // LagrangeCurve, Hermite, and CatmullRom override addControlPoint
+                    if (l) {
                         l->removeControlPoint(currentPointIndex);
-                        l->populatePoints();
+                    } else if (c) {
+                        c->removeControlPoint(currentPointIndex);
+                    } else if (h) {
+                        h->removeControlPoint(currentPointIndex);
                     } else {
                         selectedCurve->removeControlPoint(currentPointIndex);
-                        selectedCurve->populatePoints();
                     }
+
+                    selectedCurve->populatePoints();
                     currentPointIndex = -1;
                 }
                 break;
+            }
             case polyline: {
                 if (drawing && curves.size() > 0) {
                     selectedCurve->addControlPoint(f);
@@ -287,6 +361,23 @@ void onMouse(int button, int state, int x, int y) {
                 }
                 break;
             }
+            case catmullrom: {
+                CatmullRom* c;
+                if (drawing && curves.size() > 0) {
+                    c = dynamic_cast<CatmullRom*>(selectedCurve);
+                    c->addControlPoint(f);
+                    c->populatePoints();
+                } else {
+                    drawing = true;
+                    curves.push_back(new CatmullRom());
+                    selectedCurve = curves.back();
+                    selected = int(curves.size()) - 1;
+
+                    c = dynamic_cast<CatmullRom*>(selectedCurve);
+                    c->addControlPoint(f);
+                }
+                break;
+            }
             case move: {
                 if (!drawing && curves.size() > 0) {
                     currentPointIndex = mouseOverControlPoint(f);
@@ -304,6 +395,7 @@ void onMouse(int button, int state, int x, int y) {
                         draggingControlPoint = true;
                     }
                 }
+                break;
             }
             default: {
                 break;
@@ -321,10 +413,21 @@ void drawCurve(Freeform *curve) {
     BezierCurve *b = dynamic_cast<BezierCurve*>(curve);
     LagrangeCurve *l = dynamic_cast<LagrangeCurve*>(curve);
     Hermite *h = dynamic_cast<Hermite*>(curve);
+    CatmullRom *c = dynamic_cast<CatmullRom*>(curve);
 
     if (curve == selectedCurve && !draggingControlPoint) {
         glColor3fv(blue);
         glLineWidth(2 * lineWidth);
+        if (filling) {
+            Polyline *p = dynamic_cast<Polyline*>(selectedCurve);
+            if (p) {
+                p->fill();
+            } else {
+                curve->fill();
+            }
+        }
+    } else {
+        glLineWidth(lineWidth);
     }
 
     if (p) {
@@ -343,16 +446,20 @@ void drawCurve(Freeform *curve) {
             glColor3fv(green);
         }
         l->draw();
+    } else if (c) {
+        if (curve != selectedCurve || draggingControlPoint) {
+            glColor3fv(fuchsia);
+        }
+        h->draw();
+        h->linesBetweenTangentAndControlPoints();
+        h->drawTangentPoints();
     } else if (h) {
         if (curve != selectedCurve || draggingControlPoint) {
             glColor3fv(yellow);
         }
         h->draw();
         h->linesBetweenTangentAndControlPoints();
-    }
-
-    if (filling) {
-        curve->fill();
+        h->drawTangentPoints();
     }
     
     curve->drawControlPoints();
@@ -370,8 +477,19 @@ void onDisplay() {
     }
 
     if (draggingControlPoint) {
+        float2 p;
+        Hermite *h = dynamic_cast<Hermite*>(selectedCurve);
+        CatmullRom *c = dynamic_cast<CatmullRom*>(selectedCurve);
+        // hermite overrides getControlPoint
+        if (c) {
+            p = c->getControlPoint(currentPointIndex);
+        } else if (h) {
+            p = h->getControlPoint(currentPointIndex);
+        } else {
+            p = selectedCurve->getControlPoint(currentPointIndex);
+        }
+
         glPointSize(3.0f * pointSize);
-        float2 p = selectedCurve->getControlPoint(currentPointIndex);
         glBegin(GL_POINTS);
         glColor3fv(blue);
         glVertex2f(p.x, p.y);
@@ -432,13 +550,20 @@ void onKeyboard(unsigned char key, int mouseX, int mouseY) {
             currentMode = addControlPoints;
             break;
         }
+        case 'r': {
+            if (debug && currentMode != catmullrom) {
+                printf("catmullrom selected\n");
+            }
+            currentMode = catmullrom;
+            break;
+        }
         case 'q': {
             if (curves.size() > 0) {
                 selectedCurve->rotationAngle++;
             }
             break;
         }
-        case 'r': {
+        case 'e': {
             if (curves.size() > 0) {
                 selectedCurve->rotationAngle--;
             }

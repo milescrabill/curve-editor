@@ -26,13 +26,11 @@
 
 /* Begin PBXFileReference section */
 		0219EDCD19F2B87A005724DF /* bezierclock.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bezierclock.h; sourceTree = "<group>"; };
-		0219EDCE19F2B925005724DF /* beziernumber.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = beziernumber.h; sourceTree = "<group>"; };
 		022F58CC19D982E6006A4D79 /* freeformcurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = freeformcurve.h; sourceTree = "<group>"; };
 		022F58CD19D9848A006A4D79 /* bezier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bezier.h; sourceTree = "<group>"; };
 		0235E3D819F138F200E0F259 /* hermite.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = hermite.h; sourceTree = "<group>"; };
 		0259A2FF19E34F7700790F97 /* sinewave.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = sinewave.h; sourceTree = "<group>"; };
 		026567C219DD9080004B16BE /* polyline.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = polyline.h; sourceTree = "<group>"; };
-		026567C319DD9263004B16BE /* lagrangecurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lagrangecurve.h; sourceTree = "<group>"; };
 		0268D2E719CADDAA00480123 /* curvePractical */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = curvePractical; sourceTree = BUILT_PRODUCTS_DIR; };
 		0268D2EA19CADDAA00480123 /* main.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = main.cpp; sourceTree = "<group>"; };
 		0268D2F119CADE6D00480123 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
@@ -40,6 +38,9 @@
 		0268D2F519CADEDA00480123 /* float2.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = float2.h; sourceTree = "<group>"; };
 		0268D2F619CAE7BC00480123 /* curve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curve.h; sourceTree = "<group>"; };
 		0268D2F719CAE7E000480123 /* circle.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = circle.h; sourceTree = "<group>"; };
+		026AD18019F400130022AD87 /* catmullrom.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = catmullrom.h; sourceTree = "<group>"; };
+		026AD18119F400470022AD87 /* lagrange.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = lagrange.h; sourceTree = "<group>"; };
+		026AD18219F400650022AD87 /* bezierdigit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bezierdigit.h; sourceTree = "<group>"; };
 		0286264A19E69337009D84CF /* curveinstance.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = curveinstance.h; sourceTree = "<group>"; };
 		02BB5AE419D424F900ED06EF /* wonkycurve.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = wonkycurve.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -80,15 +81,16 @@
 			children = (
 				0268D2EA19CADDAA00480123 /* main.cpp */,
 				0219EDCD19F2B87A005724DF /* bezierclock.h */,
-				0219EDCE19F2B925005724DF /* beziernumber.h */,
+				026AD18219F400650022AD87 /* bezierdigit.h */,
+				026AD18019F400130022AD87 /* catmullrom.h */,
 				026567C219DD9080004B16BE /* polyline.h */,
 				0235E3D819F138F200E0F259 /* hermite.h */,
 				02BB5AE419D424F900ED06EF /* wonkycurve.h */,
 				022F58CC19D982E6006A4D79 /* freeformcurve.h */,
 				022F58CD19D9848A006A4D79 /* bezier.h */,
 				0268D2F719CAE7E000480123 /* circle.h */,
+				026AD18119F400470022AD87 /* lagrange.h */,
 				0268D2F519CADEDA00480123 /* float2.h */,
-				026567C319DD9263004B16BE /* lagrangecurve.h */,
 				0259A2FF19E34F7700790F97 /* sinewave.h */,
 				0268D2F619CAE7BC00480123 /* curve.h */,
 				0286264A19E69337009D84CF /* curveinstance.h */,

@@ -11,6 +11,11 @@
 
 class Polyline : public Freeform {
 public:
+
+    int curveType() {
+        return 2;
+    }
+
     void draw() {
         glLoadIdentity();
         glPushMatrix();

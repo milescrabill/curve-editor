@@ -1,32 +1,40 @@
 //
-//  hermite.h
+//  catmullrom.h
 //  curvePractical
 //
-//  Created by Miles Crabill on 10/17/14.
+//  Created by Miles Crabill on 10/19/14.
 //  Copyright (c) 2014 Miles Crabill. All rights reserved.
 //
 
-#ifndef curvePractical_hermite_h
-#define curvePractical_hermite_h
+#ifndef curvePractical_catmullrom_h
+#define curvePractical_catmullrom_h
 
-#include "freeformcurve.h"
-#include "float2.h"
-#include <vector>
+#include "hermite.h"
 
-class Hermite : public Freeform {
-protected:
-    std::vector<float2> tangentPoints;
-    std::vector<float2> combinedPoints;
+class CatmullRom : public Hermite {
 public:
+    void redistributeTangents() {
+        int n = int(controlPoints.size()) - 1;
 
-    int curveType() {
-        return 3;
+        // if we have enough points, make the first and last tangents
+        // depend on control points by looping around to the other end
+        if (n > 1) {
+            tangentPoints[0] = (controlPoints[1] - controlPoints[n]) * 0.5f;
+            tangentPoints[n] = (controlPoints[1] - controlPoints[n-1]) * 0.5f;
+        } else {
+            tangentPoints[0] = float2(0.0f, 0.0f);
+            tangentPoints[n] = float2(0.0f, 0.0f);
+        }
+
+        for (int i = 1; i < tangentPoints.size() - 1; i++) {
+            tangentPoints[i] = (controlPoints[i+1] - controlPoints[i-1]) * 0.5f;
+        }
     }
 
-    // overriding because have separate array of tangentpoints
     void addControlPoint(float2 p) {
         controlPoints.push_back(p);
         tangentPoints.push_back(p - float2(0.2f, 0.2f));
+        redistributeTangents();
     }
 
     // combines tangentPoints and controlPoints into one vector
@@ -52,17 +60,16 @@ public:
     // overriding because have separate array of tangentpoints
     void setControlPoint(int index, float2 p) {
         if (index >= controlPoints.size()) {
-            tangentPoints[index - controlPoints.size()] = p;
+//            tangentPoints[index - controlPoints.size()] = p;
         } else {
             controlPoints[index] = p;
         }
+        redistributeTangents();
     }
 
     void removeControlPoint(int index) {
-        if (index < controlPoints.size()) {
-            controlPoints.erase(controlPoints.begin() + index);
-            tangentPoints.erase(tangentPoints.begin() + index);
-        }
+        controlPoints.erase(controlPoints.begin() + index);
+        tangentPoints.erase(tangentPoints.begin() + index);
     }
 
     void clearControlPoints() {
@@ -96,37 +103,6 @@ public:
         glRotatef(-rotationAngle, 0, 0, 1);
     }
 
-    void linesBetweenTangentAndControlPoints() {
-        glColor3f(0.88f, 1.0f, 1.0f);
-        glLineWidth(0.1);
-        glRotatef(rotationAngle, 0, 0, 1);
-        glBegin(GL_LINES);
-        for (int i = 0; i < controlPoints.size(); i++) {
-            glVertex2f(controlPoints[i].x, controlPoints[i].y);
-            glVertex2f(tangentPoints[i].x, tangentPoints[i].y);
-        }
-        glEnd();
-        glRotatef(-rotationAngle, 0, 0, 1);
-
-    }
-
-    float2 hermite(int i, float t) {
-        return controlPoints[i] * (2.0*t*t*t - 3.0*t*t + 1.0) + tangentPoints[i] * (t*t*t - 2.0*t*t + t) + controlPoints[i+1] * (-2.0*t*t*t + 3.0*t*t) + tangentPoints[i+1] * (t*t*t - t*t);
-    }
-
-    float2 getPoint(float t) {
-        int n = int(controlPoints.size() - 1);
-        int i = floor(t*n);
-        float time = (t - (float(i) / float(n))) * n;
-        printf("n: %d, i: %d, time: %f\n", n, i, time);
-        return hermite(i, time);
-    }
-
-    float2 getDerivative(float t) {
-        return float2(0.0f, 0.0f);
-    }
-    
-    
 };
 
 #endif
