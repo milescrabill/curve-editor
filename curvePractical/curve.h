@@ -22,7 +22,7 @@ public:
     virtual float2 getPoint(float t) = 0;
     virtual float2 getDerivative(float t) = 0;
 
-    std::vector<float2> isPointOnCurve(float2 p) {
+    virtual std::vector<float2> isPointOnCurve(float2 p) {
         std::vector<float2> closePoints;
         for (int i = 0; i < numberOfPoints; i++) {
             if ((fabs(p.x - points[i].x) - 0.05f < 0.0f) && (fabs(p.y - points[i].y) - 0.05f < 0.0f)) {

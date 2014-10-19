@@ -40,6 +40,22 @@ public:
 
     }
 
+    std::vector<float2> isPointOnCurve(float2 p) {
+        std::vector<float2> closePoints;
+        for (int i = 0; i < controlPoints.size() - 1; i++) {
+
+            // compare slopes of controlPoints[i] -> mouse click
+            // and slope of mouse -> controlPoints[i+1]
+            float m1 = (p.y - controlPoints[i].y) / (p.x - controlPoints[i].x);
+            float m2 = (controlPoints[i+1].y - p.y) / (controlPoints[i+1].x - p.x);
+            printf("m1 (cp[%d]->mouse): %f, m2 (mouse[cp[%d]): %f\n", i, m1, i+1, m2);
+            if (fabs(m1 - m2) - 0.05f < 0.0f) {
+                closePoints.push_back(points[i]);
+            }
+        }
+        return closePoints;
+    }
+
     float2 getPointOnLine(int i, int n, float t) {
         float m;
         if (i <= n) {

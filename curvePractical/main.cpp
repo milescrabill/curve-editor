@@ -194,7 +194,7 @@ void onMouseMove(int x, int y) {
         if (draggingControlPoint) {
             // special case for catmall rom, where we append tangents to
             // end of control points, but don't want them moveable by click
-            if (currentPointIndex < selectedCurve->numberOfControlPoints()) {
+            if (currentPointIndex < selectedCurve->numberOfControlPoints() || selectedCurve->curveType() == HermiteType) {
                 selectedCurve->setControlPoint(currentPointIndex, f);
             }
             selectedCurve->populatePoints();
@@ -364,11 +364,13 @@ void drawCurve(Freeform *curve) {
     if (curve == selectedCurve && !draggingControlPoint) {
         glColor3fv(blue);
         glLineWidth(2 * lineWidth);
+        glPointSize(1.5 * pointSize);
         if (filling) {
             curve->fill();
         }
     } else {
         glLineWidth(lineWidth);
+        glPointSize(pointSize);
     }
 
     curve->draw();
@@ -456,18 +458,19 @@ void onKeyboard(unsigned char key, int mouseX, int mouseY) {
             currentMode = catmullrom;
             break;
         }
-        case 'q': {
-            if (curves.size() > 0) {
-                selectedCurve->rotationAngle++;
-            }
-            break;
-        }
-        case 'e': {
-            if (curves.size() > 0) {
-                selectedCurve->rotationAngle--;
-            }
-            break;
-        }
+        // this worked, but not with the ability to click points / curves
+//        case 'q': {
+//            if (curves.size() > 0) {
+//                selectedCurve->rotationAngle++;
+//            }
+//            break;
+//        }
+//        case 'e': {
+//            if (curves.size() > 0) {
+//                selectedCurve->rotationAngle--;
+//            }
+//            break;
+//        }
     }
 }
 
