@@ -40,37 +40,37 @@ public:
 
     }
 
+    bool isBetween(float2 a, float2 b, float2 c) {
+        float cp = (c.y - a.y) * (b.x - a.x) - (c.x - a.x) * (b.y - a.y);
+        if (fabs(cp) > 0.05){
+            return false;
+        }
+
+        float dp = (c.x - a.x) * (b.x - a.x) + (c.y - a.y)*(b.y - a.y);
+        if (dp < 0) {
+            return false;
+        }
+
+        float lengthSquared = (b.x - a.x) * (b.x - a.x) + (b.y - a.y) * (b.y - a.y);
+        if (dp > lengthSquared) {
+            return false;
+        }
+
+        return true;
+    }
+
     std::vector<float2> isPointOnCurve(float2 p) {
         std::vector<float2> closePoints;
         for (int i = 0; i < controlPoints.size() - 1; i++) {
-
-            // compare slopes of controlPoints[i] -> mouse click
-            // and slope of mouse -> controlPoints[i+1]
-            float m1 = (p.y - controlPoints[i].y) / (p.x - controlPoints[i].x);
-            float m2 = (controlPoints[i+1].y - p.y) / (controlPoints[i+1].x - p.x);
-            printf("m1 (cp[%d]->mouse): %f, m2 (mouse[cp[%d]): %f\n", i, m1, i+1, m2);
-            if (fabs(m1 - m2) - 0.05f < 0.0f) {
+            if (isBetween(controlPoints[i], controlPoints[i+1], p)) {
                 closePoints.push_back(points[i]);
             }
         }
         return closePoints;
     }
 
-    float2 getPointOnLine(int i, int n, float t) {
-        float m;
-        if (i <= n) {
-            m = (float(controlPoints[i+1].y - controlPoints[i].y) / float(controlPoints[i+1].x - controlPoints[i].x));
-        } else {
-            m = (float(controlPoints[0].y - controlPoints[i].y) / float(controlPoints[0].x - controlPoints[i].x));
-        }
-        return float2(controlPoints[i].x + (m * t), controlPoints[i].y + (m * t));
-    }
-
     float2 getPoint(float t) {
-        int n = int(controlPoints.size() - 1);
-        int i = floor(t*n);
-        float time = (t - (float(i) / float(n))) * n;
-        return getPointOnLine(i, n, time);
+        return float2(0.0f, 0.0f);
     }
 
     float2 getDerivative(float t) {

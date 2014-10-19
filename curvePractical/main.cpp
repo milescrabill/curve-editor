@@ -12,7 +12,7 @@
         - working
     - When no keys are pressed and the user presses the mouse button, the object at the mouse cursor (if there is any) becomes selected. [15 pts if this works approximately, (*) 25 pts if this works exactly]
         - 15 points currently
-        - works for everything except polyline, approximate
+        - working
     - As long as the mouse button remains pressed, mouse movements drag the selected object. When the button is released, the object remains selected. [15 pts]
         - dragging works for all control points, work for all curves (hermite and catmull-rom wiggle a bit)
             - except polyline
@@ -32,16 +32,7 @@
         - working?
 
 
-    Total: 5 + 15 + 15 + 5 + 10 + 10 + 5 + 35 + 20
-*/
-
-/*
-    Disclaimer: This codebase is messy.
-    I now understand the point of virtual methods - I know that I should have handled inheritance differently.
-    I didn't realize that virtual methods could be implemented in the parent, and therefore have a default behavior that can be easily overriden. So instead I implemented different versions within child classes, and used dynamic_casts to check whether the method is applicable.
- 
-    Sorry,
-    Miles
+    Total: 5 + 15 + 15 + 5 + 10 + 10 + 5 + 35 + 25 (or so)
 */
 
 #include <iostream>
@@ -58,7 +49,6 @@
 #include "polyline.h"
 #include "hermite.h"
 #include "catmullrom.h"
-#include "bezierclock.h"
 
 // pixel width and height of the window, assigned later
 int width, height;
