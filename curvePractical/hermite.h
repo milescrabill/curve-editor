@@ -26,7 +26,7 @@ public:
     // overriding because have separate array of tangentpoints
     void addControlPoint(float2 p) {
         controlPoints.push_back(p);
-        tangentPoints.push_back(p - float2(0.2f, 0.2f));
+        tangentPoints.push_back(p - float2(0.1f, 0.1f));
     }
 
     // combines tangentPoints and controlPoints into one vector

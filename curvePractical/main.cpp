@@ -15,7 +15,6 @@
         - working
     - As long as the mouse button remains pressed, mouse movements drag the selected object. When the button is released, the object remains selected. [15 pts]
         - dragging works for all control points, work for all curves (hermite and catmull-rom wiggle a bit)
-            - except polyline
     - When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
         - working
     - Support removing control points of the selected curve, by holding 'D' and clicking them. [10 pts]
@@ -34,6 +33,9 @@
 
     Total: 5 + 15 + 15 + 5 + 10 + 10 + 5 + 35 + 25 (or so)
 */
+
+// compilation on OSX:
+// cc -I. -framework GLUT -framework OpenGL -framework Cocoa -Wno-deprecated -Wno-c++11-extensions -lstdc++ main.cpp -o curve
 
 #include <iostream>
 #include <vector>
@@ -67,7 +69,7 @@ const GLfloat fuchsia[] = {1.0f, 0.0f, 1.0f};
 const GLfloat randColor[] = {rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX, rand() * 1.0f / RAND_MAX};
 
 // debug flags
-const bool debug = true;
+const bool debug = false;
 const bool debugMouse = false;
 
 std::vector<Freeform*> curves;
@@ -515,7 +517,7 @@ int main(int argc, char * argv[]) {
     glPointSize(pointSize);
 
     // randomize seed
-    srand(time(NULL));
+    srand(int(time(NULL)));
 
     glutDisplayFunc(onDisplay);
     glutReshapeFunc(onReshape);
