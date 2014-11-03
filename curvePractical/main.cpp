@@ -14,21 +14,23 @@
         - 15 points currently
         - working
     - As long as the mouse button remains pressed, mouse movements drag the selected object. When the button is released, the object remains selected. [15 pts]
-        - dragging works for all control points, work for all curves (hermite and catmull-rom wiggle a bit)
-    - When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
+        working
+ - When an object is selected, the user may hold down 'A' to add control points to the selected object by clicking. [5 pts]
         - working
     - Support removing control points of the selected curve, by holding 'D' and clicking them. [10 pts]
         - working
     - Support dragging control points of the selected curve. [10 pts]
         - working
-        - note: for catmull-rom, cannot drag tangent points (as it should be) but can select them
     - When an object is selected, pressing the 'F' key should turn the curve into a polygon that fills the curve. [5 pts if it works for convex shapes, (*) 20 pts if it works for non-self-intersecting curves, (*) 25 points if it works for any curve]
         - 5 points currently
         - working for convex
      - Support cubic Hermite interpolation splines, created by clicking control points while holding key 'U'. Derivatives at control points should be manually editable. Extra controls should be displayed to allow the user to adjust derivatives. [(*) 35 pts]
         - working
      - Support Catmull-Rom splines, created by clicking control points while holding key 'R'. [25 pts]
-        - working?
+        - working
+        - note: for catmull-rom, tangent point are hidden
+            - to unhide, uncomment lines
+
 
 
     Total: 5 + 15 + 15 + 5 + 10 + 10 + 5 + 35 + 25 (or so)
@@ -341,6 +343,8 @@ void drawCurve(Freeform *curve) {
             glColor3fv(green);
             break;
         case CatmullRomType: {
+//            h->linesBetweenTangentAndControlPoints();
+//            h->drawTangentPoints();
             glColor3fv(fuchsia);
             break;
         }
@@ -474,10 +478,12 @@ void onKeyboardUp(unsigned char key, int mouseX, int mouseY) {
     } else if (key == 'f') {
         filling = !filling;
     } else if (key == 32) {
-        selected = (selected + 1) % curves.size();
-        selectedCurve = curves[selected];
-        if (debug) {
-            printf("Selected: %d\n", selected);
+        if (curves.size() > 0) {
+            selected = (selected + 1) % curves.size();
+            selectedCurve = curves[selected];
+            if (debug) {
+                printf("Selected: %d\n", selected);
+            }
         }
     } else {
         currentMode = move;

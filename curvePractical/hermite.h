@@ -97,8 +97,9 @@ public:
     }
 
     void linesBetweenTangentAndControlPoints() {
-        glColor3f(0.88f, 1.0f, 1.0f);
-        glLineWidth(0.1);
+//        glColor3f(0.88f, 1.0f, 1.0f);
+        glColor3f(0.0f, 0.0f, 0.0f);
+        glLineWidth(0.5);
         glRotatef(rotationAngle, 0, 0, 1);
         glBegin(GL_LINES);
         for (int i = 0; i < controlPoints.size(); i++) {
@@ -111,12 +112,18 @@ public:
     }
 
     float2 hermite(int i, float t) {
-        return controlPoints[i] * (2.0*t*t*t - 3.0*t*t + 1.0) + tangentPoints[i] * (t*t*t - 2.0*t*t + t) + controlPoints[i+1] * (-2.0*t*t*t + 3.0*t*t) + tangentPoints[i+1] * (t*t*t - t*t);
+        return    controlPoints[i] * (2.0*t*t*t - 3.0*t*t + 1.0)
+                + (tangentPoints[i] - controlPoints[i]) * (t*t*t - 2.0*t*t + t)
+                + controlPoints[i+1] * (-2.0*t*t*t + 3.0*t*t)
+                + (tangentPoints[i+1] - controlPoints[i+1]) * (t*t*t - t*t);
     }
 
     float2 getPoint(float t) {
-        int n = int(controlPoints.size() - 1);
+        int n = int(numberOfControlPoints() - 1);
         int i = floor(t*n);
+        if (i >= n) {
+            i = n - 1;
+        }
         float time = (t - (float(i) / float(n))) * n;
         return hermite(i, time);
     }

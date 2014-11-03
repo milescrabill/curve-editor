@@ -24,15 +24,12 @@ public:
         // if we have enough points, make the first and last tangents
         // depend on control points by looping around to the other end
         if (n > 1) {
-            tangentPoints[0] = (controlPoints[1] - controlPoints[n]) * 0.5f;
-            tangentPoints[n] = (controlPoints[1] - controlPoints[n-1]) * 0.5f;
-        } else {
-            tangentPoints[0] = float2(0.0f, 0.0f);
-            tangentPoints[n] = float2(0.0f, 0.0f);
+            tangentPoints[0] = controlPoints[1];
+            tangentPoints[n] = controlPoints[n]*2 - controlPoints[n-1];
         }
 
         for (int i = 1; i < n; i++) {
-            tangentPoints[i] = (controlPoints[i+1] - controlPoints[i-1]) * 0.5f;
+            tangentPoints[i] = (controlPoints[i+1] - controlPoints[i-1]) * 0.5f + controlPoints[i];
         }
     }
 

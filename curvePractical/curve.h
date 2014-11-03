@@ -25,7 +25,7 @@ public:
     virtual std::vector<float2> isPointOnCurve(float2 p) {
         std::vector<float2> closePoints;
         for (int i = 0; i < numberOfPoints; i++) {
-            if ((fabs(p.x - points[i].x) - 0.05f < 0.0f) && (fabs(p.y - points[i].y) - 0.05f < 0.0f)) {
+            if ((fabs(p.x - points[i].x) - 0.01f < 0.0f) && (fabs(p.y - points[i].y) - 0.01f < 0.0f)) {
                 closePoints.push_back(points[i]);
             }
         }
