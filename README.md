@@ -1,7 +1,8 @@
 curve-editor
 ============
 
-AIT Fall 2014 Graphics Curve Practical + Curve Editor Project
+AIT Fall 2014 Graphics Curve Practical + Curve Editor Project.
+
 This is a homework assignment that I submitted for the Computer Graphics course at AIT, Aquincum Institute of Technology.
 
 Assignment text:
