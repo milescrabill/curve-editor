@@ -23,3 +23,5 @@ Implemented features:
     - working
  - Support Catmull-Rom splines, created by clicking control points while holding key 'R'. [25 pts]
     - working
+
+Note: I didn't remove WIP features from this repo, bezierclock/bezierdigit/curveinstance ended up unsused.
